@@ -7,8 +7,10 @@ const app = express()
 app.use(express.json())
 app.use(cors())
 
+//MONGO
 mongoose.connect("mongodb+srv://fernando5ale:asd123asd@cluster0.p4ndpuj.mongodb.net/user");
 
+//MONGO
 app.post("/login", (req, res) => {
 	const {email, password} = req.body;
 	UserModel.findOne({email: email})
@@ -25,6 +27,7 @@ app.post("/login", (req, res) => {
 	})
 })
 
+//MONGO
 app.post('/register', (req, res) => {
     
     UserModel.create(req.body)
