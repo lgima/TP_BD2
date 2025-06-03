@@ -1,36 +1,37 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 
-export default function ReservaForm() {
+export default function ReservaEntradas() {
+  const [peliculas, setPeliculas] = useState([]);
+
+  useEffect(() => {
+    async function fetchPeliculas() {
+      try {
+        const response = await fetch("/api/peliculas");
+        if (response.ok) {
+          const data = await response.json();
+          setPeliculas(data);
+        }
+      } catch (err) {
+        // Manejo de error opcional
+      }
+    }
+    fetchPeliculas();
+  }, []);
+
   return (
-    <div>
-        <form>
-          <label htmlFor="pelicula">Película:</label>
-          <select id="pelicula" name="pelicula" required>
-            <option value="">Selecciona una película</option>
-          </select>
-
-          <label htmlFor="disponibles">Asientos disponibles:</label>
-          <input
-            type="number"
-            id="disponibles"
-            name="disponibles"
-            readOnly
-            style={{ background: "#eee" }}
-          />
-
-          <label htmlFor="asientos">Cantidad de Entradas:</label>
-          <input
-            type="number"
-            id="asientos"
-            name="asientos"
-            min="1"
-            max="10"
-            required
-          />
-
-          <button type="submit">Reservar</button>
-        </form>
-      </div>
+    <div className="container" style={{ maxWidth: 400, margin: "40px auto", background: "#fff", padding: 24, borderRadius: 8, boxShadow: "0 2px 8px #ccc" }}>
+      <label htmlFor="pelicula">Película:</label>
+      <select
+        id="pelicula"
+        name="pelicula"
+        required
+        onChange={e => setPelicula(e.target.value)}
+      >
+        <option value="">Selecciona una película</option>
+        {peliculas.map(p => (
+          <option key={p} value={p}>{p}</option>
+        ))}
+      </select>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
 
@@ -49,6 +49,11 @@ export default function Login() {
             Iniciar Sesión
           </button>
         </form>
+        <div className="text-center mt-3">
+                <Link to="/register" className=" w-100">
+                  ¿No tenés cuenta? Registrarse
+                </Link>
+          </div>
       </div>
     </div>
   );

@@ -7,6 +7,17 @@ const app = express()
 app.use(express.json())
 app.use(cors())
 
+const redis = require('redis');
+const path = require('path');
+
+
+// Crear cliente Redis
+const client = redis.createClient(); // localhost:6379 por defecto
+client.connect().catch(console.error);
+
+// Servir archivos estáticos (HTML, JS, CSS)
+app.use(express.static(path.join(__dirname, 'public')));
+
 //MONGO
 mongoose.connect("mongodb+srv://fernando5ale:asd123asd@cluster0.p4ndpuj.mongodb.net/user");
 
@@ -35,6 +46,19 @@ app.post('/register', (req, res) => {
     .catch(err => res.json(err))
 
 })
+
+//redis
+// Endpoint para obtener las películas desde Redis
+app.get('/api/peliculas', async (req, res) => {
+    try {
+        const keys = await client.keys('pelicula:*'); // todas las películas con disponibilidad
+        const nombres = keys.map(k => k.split(':')[1]); // extraer "Titanic", "Gladiador", etc.
+        res.json(nombres);
+    } catch (err) {
+        console.error('Error al obtener películas:', err);
+        res.status(500).json({ error: 'No se pudieron obtener las películas' });
+    }
+});
 
 app.get("/", (req, res) => {
   res.send("Servidor backend funcionando 😎");
