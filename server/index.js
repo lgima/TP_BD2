@@ -60,6 +60,34 @@ app.get('/api/peliculas', async (req, res) => {
     }
 });
 
+//ENDPOINT PARA OBTENER ASIENTOS DISPONIBLES DE UNA PELÍCULA
+app.get('/api/peliculas/:nombre/disponibles', async (req, res) => {
+  const { nombre } = req.params;
+  try {
+    const key = `pelicula:${nombre}`;
+    const [total, reservados] = await Promise.all([
+      client.hGet(key, 'total'),
+      client.hGet(key, 'reservados')
+    ]);
+
+    if (total === null) {
+      return res.status(404).json({ error: 'Película no encontrada' });
+    }
+
+    const totalNum = parseInt(total);
+    const reservadosNum = parseInt(reservados || '0');
+    if (isNaN(totalNum) || isNaN(reservadosNum)) {
+      return res.status(500).json({ error: 'Datos corruptos en Redis' });
+    }
+
+    const disponibles = totalNum - reservadosNum;
+    res.json({ disponibles });
+  } catch (err) {
+    console.error('Error al obtener disponibilidad:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 app.get("/", (req, res) => {
   res.send("Servidor backend funcionando 😎");
   
@@ -83,6 +111,37 @@ app.post('/api/login', (req, res) => {
         .catch(err => {
             res.status(500).json("Error en el servidor");
         });
+});
+
+// Endpoint para reservar entradas y actualizar los asientos reservados en Redis
+app.post('/api/peliculas/:nombre/reservar', async (req, res) => {
+  const { nombre } = req.params;
+  const { cantidad } = req.body;
+  if (!cantidad || isNaN(cantidad) || cantidad <= 0) {
+    return res.status(400).json({ error: 'Cantidad inválida' });
+  }
+  try {
+    const key = `pelicula:${nombre}`;
+    const [total, reservados] = await Promise.all([
+      client.hGet(key, 'total'),
+      client.hGet(key, 'reservados')
+    ]);
+    if (total === null) {
+      return res.status(404).json({ error: 'Película no encontrada' });
+    }
+    const totalNum = parseInt(total);
+    const reservadosNum = parseInt(reservados || '0');
+    const disponibles = totalNum - reservadosNum;
+    if (cantidad > disponibles) {
+      return res.status(400).json({ error: 'No hay suficientes asientos disponibles' });
+    }
+    // Actualizar la cantidad de reservados
+    await client.hSet(key, 'reservados', reservadosNum + parseInt(cantidad));
+    res.json({ success: true, mensaje: `Reserva exitosa de ${cantidad} entrada(s) para '${nombre}'` });
+  } catch (err) {
+    console.error('Error al reservar:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 app.listen(3001, () => {
