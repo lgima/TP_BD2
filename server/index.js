@@ -100,17 +100,49 @@ app.post('/api/login', (req, res) => {
         .then(user => {
             if (user) {
                 if (user.password === password) {
-                    res.json("Success");
+                    // Enviar datos del usuario (sin contraseña)
+                    res.json({ success: true, user: { id: user._id, name: user.name, email: user.email } });
                 } else {
-                    res.json("Datos incorrectos");
+                    res.json({ success: false, error: "Datos incorrectos" });
                 }
             } else {
-                res.json("Datos incorrectos");
+                res.json({ success: false, error: "Datos incorrectos" });
             }
         })
         .catch(err => {
-            res.status(500).json("Error en el servidor");
+            res.status(500).json({ success: false, error: "Error en el servidor" });
         });
+});
+
+// Nuevo endpoint para obtener datos de usuario por id
+app.get('/api/usuario/:id', async (req, res) => {
+    try {
+        const user = await UserModel.findById(req.params.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: 'Error en el servidor' });
+    }
+});
+
+// Endpoint para actualizar datos de usuario
+app.put('/api/usuario/:id', async (req, res) => {
+    try {
+        const { name, email } = req.body;
+        const user = await UserModel.findByIdAndUpdate(
+            req.params.id,
+            { name, email },
+            { new: true, runValidators: true, select: '-password' }
+        );
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: 'Error al actualizar usuario' });
+    }
 });
 
 // Endpoint para reservar entradas y actualizar los asientos reservados en Redis

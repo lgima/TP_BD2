@@ -18,10 +18,12 @@ export default function Login() {
     axios
       .post("/api/login", { email, password })
       .then((result) => {
-        if (result.data === "Success") {
+        if (result.data.success) {
+          // Guardar datos de usuario en localStorage
+          localStorage.setItem("usuario", JSON.stringify(result.data.user));
           navigate("/home");
         } else {
-          setError(result.data);
+          setError(result.data.error || "Datos incorrectos");
         }
       })
       .catch((err) => setError("Error de conexión"));
