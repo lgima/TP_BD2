@@ -66,10 +66,11 @@ export default function ReservaEntradas() {
     }
     setLoading(true);
     try {
+      const usuario = JSON.parse(localStorage.getItem("usuario"));
       const response = await fetch(`/api/peliculas/${pelicula}/reservar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cantidad: parseInt(cantidad) })
+        body: JSON.stringify({ cantidad: parseInt(cantidad), userId: usuario?.id })
       });
       const data = await response.json();
       if (response.ok && data.success) {

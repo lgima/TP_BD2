@@ -39,12 +39,17 @@ app.post("/login", (req, res) => {
 })
 
 //MONGO
-app.post('/register', (req, res) => {
-    
-    UserModel.create(req.body)
-    .then(users => res.json(users))
-    .catch(err => res.json(err))
-
+app.post('/register', async (req, res) => {
+    try {
+        const existingUser = await UserModel.findOne({ email: req.body.email });
+        if (existingUser) {
+            return res.status(400).json({ error: 'El email ya está registrado' });
+        }
+        const newUser = await UserModel.create(req.body);
+        res.json(newUser);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 })
 
 //redis
@@ -148,7 +153,7 @@ app.put('/api/usuario/:id', async (req, res) => {
 // Endpoint para reservar entradas y actualizar los asientos reservados en Redis
 app.post('/api/peliculas/:nombre/reservar', async (req, res) => {
   const { nombre } = req.params;
-  const { cantidad } = req.body;
+  const { cantidad, userId } = req.body;
   if (!cantidad || isNaN(cantidad) || cantidad <= 0) {
     return res.status(400).json({ error: 'Cantidad inválida' });
   }
@@ -169,9 +174,49 @@ app.post('/api/peliculas/:nombre/reservar', async (req, res) => {
     }
     // Actualizar la cantidad de reservados
     await client.hSet(key, 'reservados', reservadosNum + parseInt(cantidad));
+    // Guardar la reserva en el usuario
+    if (userId) {
+      await UserModel.findByIdAndUpdate(
+        userId,
+        { $push: { reservas: { pelicula: nombre, cantidad: parseInt(cantidad) } } }
+      );
+    }
     res.json({ success: true, mensaje: `Reserva exitosa de ${cantidad} entrada(s) para '${nombre}'` });
   } catch (err) {
     console.error('Error al reservar:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Endpoint para cancelar una reserva y actualizar los asientos reservados en Redis
+app.post('/api/peliculas/:nombre/cancelar', async (req, res) => {
+  const { nombre } = req.params;
+  const { userId } = req.body;
+  if (!userId) {
+    return res.status(400).json({ error: 'Falta el userId' });
+  }
+  try {
+    // Buscar al usuario y la reserva correspondiente
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    const reserva = user.reservas.find(r => r.pelicula === nombre);
+    if (!reserva) {
+      return res.status(404).json({ error: 'Reserva no encontrada para esta película' });
+    }
+    const cantidad = reserva.cantidad;
+    // Eliminar la reserva del usuario
+    await UserModel.findByIdAndUpdate(userId, { $pull: { reservas: { pelicula: nombre } } });
+    // Actualizar la cantidad de reservados en Redis
+    const key = `pelicula:${nombre}`;
+    const reservados = await client.hGet(key, 'reservados');
+    const reservadosNum = parseInt(reservados || '0');
+    const nuevoReservados = Math.max(0, reservadosNum - cantidad);
+    await client.hSet(key, 'reservados', nuevoReservados);
+    res.json({ success: true, mensaje: `Reserva cancelada y asientos liberados para '${nombre}'` });
+  } catch (err) {
+    console.error('Error al cancelar reserva:', err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });

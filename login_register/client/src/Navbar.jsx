@@ -7,7 +7,7 @@ export default function Navbar() {
         <nav className="navbar">
             <div className="nav-container">
                 <a href="#" className="nav-link" onClick={() => navigate('/home')}>Reserva de Entradas</a>
-                <a href="#" className="nav-link">Mis Reservas</a>
+                <a href="#" className="nav-link" onClick={() => navigate('/reservas')}>Mis Reservas</a>
                 <a href="#" className="nav-link" onClick={() => navigate('/datos')}>Mis Datos</a>
                 <a href="#" className="nav-link" onClick={() => navigate('/login')}>Salir</a>
             </div>

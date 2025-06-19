@@ -12,23 +12,51 @@ export default function Signup({ onSwitchToLogin }) {
   const [name, setName] = useState();
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
+  const [warning, setWarning] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setWarning("");
     axios
       .post("http://localhost:3001/register", { name, email, password })
       .then((result) => {
-        console.log(result);
-        navigate("/login");
+        if (result.data && result.data.error) {
+          setWarning("Ya existe un usuario con este mail registrado");
+        } else {
+          navigate("/login");
+        }
       })
-
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        if (err.response && err.response.status === 400 && err.response.data && err.response.data.error) {
+          setWarning("Ya existe un usuario con este mail registrado");
+        } else {
+          setWarning("Error al registrar usuario");
+        }
+      });
   };
 
   return (
     <div className="container mt-5" style={{ maxWidth: "500px" }}>
       <h2 className="mb-4">Registro</h2>
+      {warning && (
+        <div
+          style={{
+            background: "#fff3cd",
+            color: "#856404",
+            border: "1.5px solid #ffeeba",
+            borderRadius: 8,
+            padding: "10px 16px",
+            marginBottom: 16,
+            textAlign: "center",
+            fontWeight: 700,
+            fontSize: 16,
+            boxShadow: "0 2px 8px #ffeeba88",
+          }}
+        >
+          {warning}
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label className="form-label">Nombre</label>
