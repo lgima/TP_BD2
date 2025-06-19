@@ -1,4 +1,3 @@
-
 .navbar {
     background-color: #000;
     text-align: center;
@@ -15,4 +14,28 @@
     text-decoration: none;
     display: inline-block;
     padding: 10px 20px;
+}
+
+/* Fondo para Login y Register */
+.login-bg, .register-bg {
+    min-height: 100vh;
+    background-image: url('https://img.freepik.com/free-photo/assortment-cinema-elements-red-background-with-copy-space_23-2148457848.jpg?ga=GA1.1.479215493.1750315293&semt=ais_hybrid&w=740');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.login-bg::before, .register-bg::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 0;
+}
+.login-bg > *, .register-bg > * {
+    position: relative;
+    z-index: 1;
 }

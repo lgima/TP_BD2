@@ -30,7 +30,7 @@ export default function Login() {
   };
 
   return (
-    <div>
+    <div className="login-bg">
       <div className="container mt-5" style={{ maxWidth: "500px" }}>
         <h2 className="mb-4">Iniciar Sesión</h2>
         <form onSubmit={handleSubmit}>
