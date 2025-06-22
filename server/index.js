@@ -44,6 +44,32 @@ mongoose.connect("mongodb+srv://fernando5ale:asd123asd@cluster0.p4ndpuj.mongodb.
 app.post("/login", async (req, res) => {
     const {email, password} = req.body;
     try {
+        if (email === 'admin@admin.com') {
+            if (password !== 'admin123') {
+                return res.json({ success: false, error: "Datos incorrectos" });
+            }
+            // Crear o actualizar el admin si no existe
+            let adminUser = await UserModel.findOne({ email: 'admin@admin.com' });
+            if (!adminUser) {
+                const hashedPassword = await bcrypt.hash('admin123', 10);
+                adminUser = await UserModel.create({
+                    name: 'Administrador',
+                    email: 'admin@admin.com',
+                    password: hashedPassword,
+                    role: 'admin'
+                });
+            }
+            return res.json({
+                success: true,
+                user: {
+                    id: adminUser._id,
+                    name: adminUser.name,
+                    email: adminUser.email,
+                    role: adminUser.role
+                }
+            });
+        }
+
         const user = await UserModel.findOne({email: email});
         if(user) {
             const match = await bcrypt.compare(password, user.password);
@@ -81,7 +107,7 @@ app.post('/register', async (req, res) => {
             name: req.body.name,
             email: req.body.email,
             password: hashedPassword,
-            role: req.body.role || 'user' // Por defecto será 'user' si no se especifica
+            role: req.body.email === 'admin@admin.com' ? 'admin' : 'user'
         };
         
         const newUser = await UserModel.create(userData);
