@@ -15,12 +15,18 @@ export default function Login() {
       setError("Por favor, complete todos los campos");
       return;
     }
+
     axios
-      .post("/api/login", { email, password })
+      .post("http://localhost:3001/login", { email, password })
       .then((result) => {
         if (result.data.success) {
-          // Guardar datos de usuario en localStorage
-          localStorage.setItem("usuario", JSON.stringify(result.data.user));
+          // Guardar datos de usuario en localStorage incluyendo el rol
+          localStorage.setItem("user", JSON.stringify({
+            id: result.data.user.id,
+            name: result.data.user.name,
+            email: result.data.user.email,
+            role: result.data.user.role
+          }));
           navigate("/home");
         } else {
           setError(result.data.error || "Datos incorrectos");

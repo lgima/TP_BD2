@@ -9,7 +9,7 @@ export default function DatosUsuario() {
 
   useEffect(() => {
     // Obtener usuario de localStorage
-    const usuarioGuardado = localStorage.getItem("usuario");
+    const usuarioGuardado = localStorage.getItem("user"); // Cambiado de "usuario" a "user"
     if (usuarioGuardado) {
       const userObj = JSON.parse(usuarioGuardado);
       // Obtener datos actualizados desde el backend
@@ -38,7 +38,12 @@ export default function DatosUsuario() {
     try {
       const res = await axios.put(`/api/usuario/${usuario._id || usuario.id}`, form);
       setUsuario(res.data);
-      localStorage.setItem("usuario", JSON.stringify({ id: res.data._id, name: res.data.name, email: res.data.email }));
+      localStorage.setItem("user", JSON.stringify({ // Cambiado de "usuario" a "user"
+        id: res.data._id,
+        name: res.data.name,
+        email: res.data.email,
+        role: res.data.role // Aseguramos que el rol se mantenga
+      }));
       setEditando(false);
     } catch (err) {
       alert("Error al actualizar los datos");

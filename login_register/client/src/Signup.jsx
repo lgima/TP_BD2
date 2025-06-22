@@ -12,6 +12,7 @@ export default function Signup({ onSwitchToLogin }) {
   const [name, setName] = useState();
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
+  const [role, setRole] = useState("user");
   const [warning, setWarning] = useState("");
   const navigate = useNavigate();
 
@@ -19,7 +20,7 @@ export default function Signup({ onSwitchToLogin }) {
     e.preventDefault();
     setWarning("");
     axios
-      .post("http://localhost:3001/register", { name, email, password })
+      .post("http://localhost:3001/register", { name, email, password, role })
       .then((result) => {
         if (result.data && result.data.error) {
           setWarning("Ya existe un usuario con este mail registrado");
@@ -85,6 +86,18 @@ export default function Signup({ onSwitchToLogin }) {
               name="password"
               onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Rol</label>
+            <select
+              name="role"
+              className="form-control"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="user">Usuario</option>
+              <option value="admin">Administrador</option>
+            </select>
           </div>
           <button type="submit" className="btn btn-success w-100">
             Registrarse
