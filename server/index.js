@@ -2,6 +2,7 @@ const express = require("express")
 const mongoose = require('mongoose')
 const cors = require("cors")
 const UserModel = require('./models/User')
+const bcrypt = require('bcrypt')
 
 const app = express()
 app.use(express.json())
@@ -9,7 +10,6 @@ app.use(cors())
 
 const redis = require('redis');
 const path = require('path');
-
 
 // Crear cliente Redis
 const client = redis.createClient(); // localhost:6379 por defecto
@@ -21,22 +21,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 //MONGO
 mongoose.connect("mongodb+srv://fernando5ale:asd123asd@cluster0.p4ndpuj.mongodb.net/user");
 
-//MONGO
-app.post("/login", (req, res) => {
-	const {email, password} = req.body;
-	UserModel.findOne({email: email})
-	.then(user => {
-		if(user) {
-			if(user.password === password) {
-				res.json("Success")
-			} else {
-				res.json("Datos incorrectos")
-			}
-		} else {
-            res.json("Datos incorrectos")
+app.post("/login", async (req, res) => {
+    const {email, password} = req.body;
+    try {
+        const user = await UserModel.findOne({email: email});
+        if(user) {
+            const match = await bcrypt.compare(password, user.password);
+            if(match) {
+                res.json("Success");
+            } else {
+                res.json("Datos incorrectos");
+            }
+        } else {
+            res.json("Datos incorrectos");
         }
-	})
-})
+    } catch(err) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+});
 
 //MONGO
 app.post('/register', async (req, res) => {
@@ -45,7 +47,14 @@ app.post('/register', async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ error: 'El email ya está registrado' });
         }
-        const newUser = await UserModel.create(req.body);
+        
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        const userData = {
+            ...req.body,
+            password: hashedPassword
+        };
+        
+        const newUser = await UserModel.create(userData);
         res.json(newUser);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -99,24 +108,23 @@ app.get("/", (req, res) => {
 });
 
 //MONGO
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
-    UserModel.findOne({ email: email })
-        .then(user => {
-            if (user) {
-                if (user.password === password) {
-                    // Enviar datos del usuario (sin contraseña)
-                    res.json({ success: true, user: { id: user._id, name: user.name, email: user.email } });
-                } else {
-                    res.json({ success: false, error: "Datos incorrectos" });
-                }
+    try {
+        const user = await UserModel.findOne({ email: email });
+        if (user) {
+            const match = await bcrypt.compare(password, user.password);
+            if (match) {
+                res.json({ success: true, user: { id: user._id, name: user.name, email: user.email } });
             } else {
                 res.json({ success: false, error: "Datos incorrectos" });
             }
-        })
-        .catch(err => {
-            res.status(500).json({ success: false, error: "Error en el servidor" });
-        });
+        } else {
+            res.json({ success: false, error: "Datos incorrectos" });
+        }
+    } catch(err) {
+        res.status(500).json({ success: false, error: "Error en el servidor" });
+    }
 });
 
 // Nuevo endpoint para obtener datos de usuario por id
